@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뽀모도르 타이머</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .timer-display {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .status {
+            font-size: 1.5em;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        .status.work {
+            color: #ff6b6b;
+        }
+
+        .status.break {
+            color: #4ecdc4;
+        }
+
+        .controls {
+            margin: 30px 0;
+        }
+
+        button {
+            font-size: 1.2em;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(31, 38, 135, 0.4);
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .pause-btn {
+            background: linear-gradient(45deg, #ff9800, #e68900);
+            color: white;
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .session-counter {
+            margin-top: 20px;
+            font-size: 1.3em;
+        }
+
+        .progress-ring {
+            margin: 20px 0;
+        }
+
+        .progress-ring svg {
+            width: 200px;
+            height: 200px;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .progress-ring .bg {
+            stroke: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-ring .progress {
+            stroke: #fff;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .timer-display {
+                font-size: 3em;
+            }
+            
+            button {
+                font-size: 1em;
+                padding: 12px 24px;
+                margin: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🍅 뽀모도르</h1>
+        
+        <div class="progress-ring">
+            <svg>
+                <circle class="bg" cx="100" cy="100" r="90"></circle>
+                <circle class="progress" cx="100" cy="100" r="90" id="progress-circle"></circle>
+            </svg>
+        </div>
+        
+        <div class="timer-display" id="timer">25:00</div>
+        <div class="status work" id="status">작업 시간</div>
+        
+        <div class="controls">
+            <button class="start-btn" id="startBtn" onclick="toggleTimer()">시작</button>
+            <button class="reset-btn" id="resetBtn" onclick="resetTimer()">리셋</button>
+        </div>
+        
+        <div class="session-counter">
+            완료된 세션: <span id="sessions">0</span>
+        </div>
+    </div>
+
+    <script>
+        class PomodoroTimer {
+            constructor() {
+                this.workTime = 25 * 60; // 25분
+                this.shortBreak = 5 * 60; // 5분
+                this.longBreak = 15 * 60; // 15분
+                this.currentTime = this.workTime;
+                this.isRunning = false;
+                this.isWorkSession = true;
+                this.sessionsCompleted = 0;
+                this.timer = null;
+                this.totalTime = this.workTime;
+                
+                this.updateDisplay();
+                this.updateProgressRing();
+            }
+
+            toggleTimer() {
+                if (this.isRunning) {
+                    this.pauseTimer();
+                } else {
+                    this.startTimer();
+                }
+            }
+
+            startTimer() {
+                this.isRunning = true;
+                document.getElementById('startBtn').textContent = '일시정지';
+                document.getElementById('startBtn').className = 'pause-btn';
+                
+                this.timer = setInterval(() => {
+                    this.currentTime--;
+                    this.updateDisplay();
+                    this.updateProgressRing();
+                    
+                    if (this.currentTime <= 0) {
+                        this.completeSession();
+                    }
+                }, 1000);
+            }
+
+            pauseTimer() {
+                this.isRunning = false;
+                clearInterval(this.timer);
+                document.getElementById('startBtn').textContent = '시작';
+                document.getElementById('startBtn').className = 'start-btn';
+            }
+
+            resetTimer() {
+                this.pauseTimer();
+                this.isWorkSession = true;
+                this.currentTime = this.workTime;
+                this.totalTime = this.workTime;
+                this.updateDisplay();
+                this.updateStatus();
+                this.updateProgressRing();
+            }
+
+            completeSession() {
+                this.pauseTimer();
+                this.playNotification();
+                
+                if (this.isWorkSession) {
+                    this.sessionsCompleted++;
+                    document.getElementById('sessions').textContent = this.sessionsCompleted;
+                    
+                    // 4세션마다 긴 휴식, 아니면 짧은 휴식
+                    if (this.sessionsCompleted % 4 === 0) {
+                        this.startBreak(this.longBreak);
+                    } else {
+                        this.startBreak(this.shortBreak);
+                    }
+                } else {
+                    this.startWork();
+                }
+            }
+
+            startWork() {
+                this.isWorkSession = true;
+                this.currentTime = this.workTime;
+                this.totalTime = this.workTime;
+                this.updateStatus();
+                this.updateProgressRing();
+                this.startTimer();
+            }
+
+            startBreak(duration) {
+                this.isWorkSession = false;
+                this.currentTime = duration;
+                this.totalTime = duration;
+                this.updateStatus();
+                this.updateProgressRing();
+                this.startTimer();
+            }
+
+            updateDisplay() {
+                const minutes = Math.floor(this.currentTime / 60);
+                const seconds = this.currentTime % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            updateStatus() {
+                const statusElement = document.getElementById('status');
+                if (this.isWorkSession) {
+                    statusElement.textContent = '작업 시간';
+                    statusElement.className = 'status work';
+                } else {
+                    const isLongBreak = this.totalTime === this.longBreak;
+                    statusElement.textContent = isLongBreak ? '긴 휴식' : '짧은 휴식';
+                    statusElement.className = 'status break';
+                }
+            }
+
+            updateProgressRing() {
+                const circle = document.getElementById('progress-circle');
+                const radius = 90;
+                const circumference = 2 * Math.PI * radius;
+                const progress = (this.totalTime - this.currentTime) / this.totalTime;
+                const offset = circumference * (1 - progress);
+                
+                circle.style.strokeDasharray = circumference;
+                circle.style.strokeDashoffset = offset;
+            }
+
+            playNotification() {
+                // 브라우저 알림
+                if (Notification.permission === 'granted') {
+                    new Notification('뽀모도르 타이머', {
+                        body: this.isWorkSession ? '작업 시간이 끝났습니다! 휴식하세요.' : '휴식이 끝났습니다! 작업을 시작하세요.',
+                        icon: '🍅'
+                    });
+                }
+                
+                // 진동 (모바일)
+                if (navigator.vibrate) {
+                    navigator.vibrate([500, 200, 500]);
+                }
+            }
+        }
+
+        // 전역 변수로 타이머 인스턴스 생성
+        let pomodoro;
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', () => {
+            pomodoro = new PomodoroTimer();
+            
+            // 알림 권한 요청
+            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+        });
+
+        // 전역 함수들 (HTML에서 호출)
+        function toggleTimer() {
+            pomodoro.toggleTimer();
+        }
+
+        function resetTimer() {
+            pomodoro.resetTimer();
+        }
+    </script>
+</body>
+</html>

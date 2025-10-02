@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Popup Class Example</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    .popup {
+      position: fixed;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      cursor: move;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .popup.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    .popup button {
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .popup.dragging {
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    /* button 필터링 */
+    button {
+      background-color: #e5e7eb;
+      font-family: "Noto Sans KR", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 700;
+      font-style: normal;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .filter-button.selected_status {
+      background-color: #73D8F3;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    /* 수면/외출 통계 스타일 */
+    .sleepout-stats-container {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .sleepout-stats-container h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #333;
+    }
+
+    .sleepout-stats-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .sleepout-stat-item {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background-color: #f8f9fa;
+      margin: 5px;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .sleepout-stat-item.sleep {
+      background-color: #FDF0CB;
+    }
+    .sleepout-stat-item.out {
+      background-color: #E5F9F0;
+    }
+    .sleepout-stat-item > div {
+      align-self: center;
+    }
+    
+    .sleepout-stat-item h3 {
+      margin-bottom: 10px;
+      /* color: #00A7C2; */
+      color: #333;
+    }
+    
+    .sleepout-stat-item p {
+      margin-top: 10px;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #333;
+    }
+    .sleepout-stat-item.bottom-container {
+      grid-column: 1 / -1;
+      padding: 4px;
+      background-color: white;
+      border-radius: 12px;
+      width: calc(100% - 40px); /* 상위보다 40px 넓게 */
+    }
+    .sleep-out-bottom-container {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr); /* 7개 딱 맞춰 한 줄 */
+      gap: 12px;                              /* 카드 간격 */
+      align-items: stretch;                   /* 높이 맞춤 */
+      font-weight: 700;
+    }
+
+    .sleep-out-bottom-container > div {
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      /* background: #F5F7FA; */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .sleepout-stat-item .so-title {
+      font-weight: bold;
+      text-shadow: 0.5px 0 0 currentColor; /* 가짜 굵기 효과 */
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .sleep-out-bottom-container > div > span:nth-child(2) {
+      color: #878686;
+    }
+    @media (max-width: 1024px){
+      .sleep-out-bottom-container{
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    @media (max-width: 640px){
+      .sleep-out-bottom-container{
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+/* 외출 사류 필터링 드롭다운 */
+    .out-toggle {
+        display: none;
+        position: relative;
+    }
+    
+    .out-toggle.show {
+        display: inline-block;
+    }
+    
+    .toggle-button {
+        padding: 8px 15px;
+        border: 1px solid #6c757d;
+        background: white;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 12px;
+        margin-left: 5px;
+    }
+    
+    .toggle-button:hover {
+        background: #f8f9fa;
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        min-width: 150px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: none;
+    }
+    
+    .dropdown-menu.show {
+        display: block;
+    }
+    
+    .dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+    }
+    
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .dropdown-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .dropdown-item.selected {
+        background: #e3f2fd;
+        color: #007bff;
+    }
+    
+    .selected-filters {
+        margin-top: 15px;
+        padding: 10px;
+        background: #fff3cd;
+        border-radius: 5px;
+    }
+    
+    .items {
+        margin-top: 20px;
+    }
+    
+    .item {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background: white;
+    }
+    
+    .item.hidden {
+        display: none;
+    }
+    
+    .item[data-type="sleep"] {
+        border-left: 4px solid #28a745;
+    }
+    
+    .item[data-type="out"] {
+        border-left: 4px solid #ffc107;
+    }
+    </style>
+</head>
+
+<body>
+  <div style="padding: 20px; gap: 10px;">
+    <span><i class="fa-solid fa-kiwi-bird"></i> kiwi</span>
+    <span><i class="fa-solid fa-dragon"></i> dragon</span>
+  </div>
+  <div style="padding: 20px;">
+    <button id="openPopupBtn">팝업 열기</button>
+  </div>
+  <div style="padding: 20px;"><!-- 필터링 버튼 -->
+    <button class="filter-button selected_status" data-filter="all">전체</button>
+    <button class="filter-button" data-filter="sleep">수면</button>
+    <button class="filter-button" data-filter="out">외출</button>
+
+    
+    <!-- 외출 토글 (외출 버튼 선택시에만 나타남) -->
+    <div class="out-toggle" id="out-toggle">
+        <button class="toggle-button" id="toggle-button">
+            사유 선택 ▼
+        </button>
+        <div class="dropdown-menu" id="dropdown-menu">
+            <div class="dropdown-item" data-reason="all">전체</div>
+            <div class="dropdown-item" data-reason="meal">식사</div>
+            <div class="dropdown-item" data-reason="school">학교</div>
+            <div class="dropdown-item" data-reason="bathroom">화장실</div>
+            <div class="dropdown-item" data-reason="hospital">병원</div>
+            <div class="dropdown-item" data-reason="academy">학원</div>
+            <div class="dropdown-item" data-reason="etc">기타</div>
+        </div>
+    </div>
+  </div>
+  <!-- <input type="text" name="selected_status" id="selected_status" value="" readonly />
+  <input type="text" name="out_rest_reason" id="out_rest_reason" value="" readonly /> -->
+
+
+  <div class="sleepout-stats-container">
+    <h2 style="text-align: left;">수면/외출 통계</h2>
+    <!-- 수면 <i class="fa-solid fa-alarm-clock"></i> -->
+    <div class="sleepout-stats-row">
+      <div class="sleepout-stat-item sleep">
+        <div>
+          <h2><i class="fa-solid fa-clock" style="color: #333;"></i> 수면</h2>
+        </div>
+        <div>
+          <h3>수면 횟수</h3>
+          <p>5회</p>
+        </div>
+        <div>
+          <h3>수면 시간</h3>
+          <p>1시간 20분</p>
+        </div>
+      </div>
+    </div>
+    <!-- 외출 <i class="fa-solid fa-arrow-right-from-bracket"></i> -->
+    <div class="sleepout-stats-row">
+      <div class="sleepout-stat-item out">
+        <div>
+          <h2><i class="fa-solid fa-arrow-right-from-bracket" style="color: #333;"></i> 외출</h2>
+        </div>
+        <div>
+          <h3>외출 횟수</h3>
+          <p>3회</p>
+        </div>
+        <div>
+          <h3>외출 시간</h3>
+          <p>1시간 10분</p>
+        </div>
+        <div class="sleepout-stat-item bottom-container">
+          <div class="sleep-out-bottom-container">
+            <div><p class="so-title">외출 사유 횟수</p></div>
+            <div>
+              <span>식사</span>
+              <span>n회</span>
+            </div>
+            <div>
+              <span>학교</span>
+              <span>n회</span>
+            </div>
+            <div>
+              <span>화장실</span>
+              <span>n회</span>
+            </div>
+            <div>
+              <span>병원</span>
+              <span>n회</span>
+            </div>
+            <div>
+              <span>학원</span>
+              <span>n회</span>
+            </div>
+            <div>
+              <span>기타</span>
+              <span>n회</span>
+            </div>
+
+          </div>
+        </div> <!-- bottom 컨테이너 끝 -->
+      </div>
+    </div>
+  </div>
+
+
+<div class="pagination-container">
+    <form id="pagination-form" method="GET" action="/test">
+        <input type="hidden" name="selected_status" id="selected_status" value="{{ selected_status|default('all') }}">
+        <input type="hidden" name="out_rest_reason" id="out_rest_reason" value="{{ out_rest_reason|default('all') }}">
+
+    </form>
+</div>
+
+  <script>
+    function submitForm() {
+      document.getElementById('pagination-form').submit();
+    }
+    // button 필터링
+    const filterButtons = document.querySelectorAll('.filter-button');
+    const filterStatus = document.getElementById('selected_status');
+    const outRestReason = document.getElementById('out_rest_reason');
+    const outToggle = document.getElementById('out-toggle'); // 토글 컨테이너
+    const toggleButton = document.getElementById('toggle-button'); // 토글 버튼
+    const dropdownMenu = document.getElementById('dropdown-menu'); // 드롭다운 메뉴
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+    let selectedOutReason = 'all';
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        filterButtons.forEach(btn => btn.classList.remove('selected_status'));
+        button.classList.add('selected_status');
+        const filter = button.dataset.filter;
+        filterStatus.value = filter;
+
+        console.log(filter);
+        if (filter === 'out') {
+          // 외출 선택시 토글 표시
+          outToggle.classList.add('show');
+        } else {
+          outRestReason.value = ''; // 초기화
+          selectedOutReason = 'all'; // 외출 사유 선택도 초기화
+          toggleButton.textContent = '사유 선택 ▼'; // 텍스트 초기화
+          // 다른 필터 선택시 토글 숨기기
+          outToggle.classList.remove('show');
+          dropdownMenu.classList.remove('show');
+        }
+        filterItems(); // 필터링 실행
+      });
+    });
+
+    // 토글 버튼 클릭 (드롭다운 열기/닫기)
+    toggleButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // 드롭다운 아이템 선택
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedOutReason = item.dataset.reason; 
+            
+            outRestReason.value = selectedOutReason; // 체크용
+            updateDropdownSelection();
+            filterItems();
+            dropdownMenu.classList.remove('show');
+        });
+    });
+
+    // 드롭다운 외부 클릭시 닫기
+    document.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+    });
+
+    function updateDropdownSelection() {
+        dropdownItems.forEach(item => {
+            item.classList.remove('selected');
+        });
+        document.querySelector(`[data-reason="${selectedOutReason}"]`).classList.add('selected');
+        
+        // 토글 버튼 텍스트 업데이트
+        const selectedText = document.querySelector(`[data-reason="${selectedOutReason}"]`).textContent;
+        toggleButton.textContent = selectedText + ' ▼';
+        dropdownMenu.classList.remove('show');
+    }
+
+    function filterItems() {
+      // const currentFilter = value;
+      submitForm();
+    }
+
+    // 페이지 로드시 서버에서 받은 값으로 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentStatus = filterStatus.value; // 서버에서 온 값
+        const currentOutReason = outRestReason.value;
+        
+        // 모든 버튼의 선택 해제 (기존 selected_status 클래스 제거)
+        filterButtons.forEach(btn => btn.classList.remove('selected_status'));
+        
+        // 해당 버튼을 활성화 (클릭 이벤트 발생시키지 않고)
+        const targetButton = document.querySelector(`[data-filter="${currentStatus}"]`);
+        if (targetButton) {
+            targetButton.classList.add('selected_status');
+        }
+        
+        // 외출 상태이고 사유가 있다면 토글 표시
+        if (currentStatus === 'out') {
+            outToggle.classList.add('show');
+            if (currentOutReason !== 'all') {
+                selectedOutReason = currentOutReason;
+                updateDropdownSelection();
+            }
+        }
+    });
+    
+    class Popup {
+      static count = 0; // 열린 팝업 수 관리
+
+      constructor(content) {
+        this.id = 'popup-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        this.createPopup(content);
+        this.addDragFunctionality();
+        this.showPopup();
+      }
+
+      // 팝업 DOM 생성
+      createPopup(content) {
+        Popup.count++;
+        const offset = Popup.count * 20;
+
+        this.el = document.createElement('div');
+        this.el.classList.add('popup');
+        this.el.id = this.id;
+        this.el.style.top = `calc(50% + ${offset}px)`;
+        this.el.style.left = `calc(50% + ${offset}px)`;
+
+        this.el.innerHTML = `
+            <div>${content}</div>
+            <button class="close-btn">닫기</button>
+          `;
+
+        document.body.appendChild(this.el);
+
+        // 닫기 버튼 이벤트
+        this.el.querySelector('.close-btn').addEventListener('click', () => this.close());
+      }
+
+      // 팝업 표시 (페이드인)
+      showPopup() {
+        setTimeout(() => this.el.classList.add('show'), 10);
+      }
+
+      // 팝업 닫기 (페이드아웃 후 제거)
+      close() {
+        this.el.classList.remove('show');
+        this.el.classList.add('hide');
+        Popup.count--;
+
+        setTimeout(() => this.el.remove(), 300);
+      }
+
+      // 드래그 기능 추가
+      addDragFunctionality() {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        this.el.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          this.el.classList.add('dragging');
+
+          this.el.style.transform = ''; // 드래그 시작 시 transform 초기화
+          initialLeft = this.el.offsetLeft;
+          initialTop = this.el.offsetTop;
+
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const onMouseMove = (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            this.el.style.left = initialLeft + dx + 'px';
+            this.el.style.top = initialTop + dy + 'px';
+          };
+
+          const onMouseUp = () => {
+            isDragging = false;
+            this.el.classList.remove('dragging');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+      }
+    }
+
+    // 예시: 버튼 클릭 시 팝업 열기
+    document.getElementById('openPopupBtn').addEventListener('click', () => {
+      new Popup(`팝업 내용입니다!<br>ID: ${Date.now()}`);
+    });
+  </script>
+</body>
+
+</html>

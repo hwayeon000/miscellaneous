@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시간 선택기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .day-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #fff;
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .day-item.active {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #f8f9ff, #fff);
+        }
+
+        .day-checkbox {
+            margin-right: 20px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .day-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            cursor: pointer;
+        }
+
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .time-picker-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .time-input {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            width: 120px;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .time-input:disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .custom-picker {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            min-width: 280px;
+        }
+
+        .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .picker-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #ff5252;
+        }
+
+        .time-wheels {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .wheel-container {
+            text-align: center;
+        }
+
+        .wheel-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .wheel {
+            width: 80px;
+            height: 120px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #fff;
+        }
+
+        .wheel-items {
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .wheel-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wheel-item:hover {
+            background: #f0f0f0;
+        }
+
+        .wheel-item.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .wheel-selector {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            border: 2px solid #667eea;
+            pointer-events: none;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .direct-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .direct-input input {
+            width: 60px;
+            padding: 8px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .direct-input input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .colon {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .picker-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #ccc;
+        }
+
+        @media (max-width: 768px) {
+            .day-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .time-inputs {
+                margin-left: 0;
+            }
+            
+            .custom-picker {
+                left: 50%;
+                transform: translateX(-50%);
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🕐 스마트 시간 선택기</h1>
+        
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="monday">
+            <label class="day-label" for="monday">월요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="monday_start_time" placeholder="09:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="monday_end_time" placeholder="18:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="tuesday">
+            <label class="day-label" for="tuesday">화요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="tuesday_start_time" placeholder="09:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="tuesday_end_time" placeholder="18:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="wednesday">
+            <label class="day-label" for="wednesday">수요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="wednesday_start_time" placeholder="09:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="wednesday_end_time" placeholder="18:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="thursday">
+            <label class="day-label" for="thursday">목요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="thursday_start_time" placeholder="09:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="thursday_end_time" placeholder="18:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="friday">
+            <label class="day-label" for="friday">금요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="friday_start_time" placeholder="09:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="friday_end_time" placeholder="18:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="saturday">
+            <label class="day-label" for="saturday">토요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="saturday_start_time" placeholder="10:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="saturday_end_time" placeholder="15:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-item">
+            <input type="checkbox" class="day-checkbox" id="sunday">
+            <label class="day-label" for="sunday">일요일</label>
+            <div class="time-inputs">
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="sunday_start_time" placeholder="10:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+                <span>~</span>
+                <div class="time-picker-container">
+                    <input type="text" class="time-input" id="sunday_end_time" placeholder="15:00" disabled>
+                    <div class="custom-picker"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TimePicker {
+            constructor() {
+                this.currentInput = null;
+                this.hourLimits = { min: 0, max: 23 };
+                this.minuteLimits = { min: 0, max: 59 };
+                this.init();
+            }
+
+            init() {
+                this.setupDayToggles();
+                this.setupTimeInputs();
+                this.setupClickOutside();
+            }
+
+            setupDayToggles() {
+                document.querySelectorAll('.day-item').forEach(row => {
+                    const checkbox = row.querySelector('.day-checkbox');
+                    const timeInputs = row.querySelectorAll('.time-input');
+                    
+                    // 행 클릭으로 토글
+                    row.addEventListener('click', (e) => {
+                        if (e.target.closest('input, .time-inputs, .custom-picker')) return;
+                        
+                        checkbox.checked = !checkbox.checked;
+                        this.toggleTimeInputs(timeInputs, checkbox.checked);
+                        this.updateRowStyle(row, checkbox.checked);
+                    });
+
+                    // 체크박스 변경 시
+                    checkbox.addEventListener('change', () => {
+                        this.toggleTimeInputs(timeInputs, checkbox.checked);
+                        this.updateRowStyle(row, checkbox.checked);
+                    });
+                });
+            }
+
+            toggleTimeInputs(inputs, enabled) {
+                inputs.forEach(input => {
+                    input.disabled = !enabled;
+                    if (!enabled) {
+                        this.closePicker();
+                    }
+                });
+            }
+
+            updateRowStyle(row, active) {
+                if (active) {
+                    row.classList.add('active');
+                } else {
+                    row.classList.remove('active');
+                }
+            }
+
+            setupTimeInputs() {
+                document.querySelectorAll('.time-input').forEach(input => {
+                    const container = input.parentElement;
+                    
+                    // 입력 필드 클릭
+                    input.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (!input.disabled) {
+                            this.openPicker(input, container);
+                        }
+                    });
+
+                    // 비활성 상태에서 클릭시 활성화
+                    input.addEventListener('pointerdown', (e) => {
+                        if (input.disabled) {
+                            e.preventDefault();
+                            const dayItem = input.closest('.day-item');
+                            const checkbox = dayItem.querySelector('.day-checkbox');
+                            const timeInputs = dayItem.querySelectorAll('.time-input');
+                            
+                            checkbox.checked = true;
+                            this.toggleTimeInputs(timeInputs, true);
+                            this.updateRowStyle(dayItem, true);
+                            
+                            setTimeout(() => {
+                                this.openPicker(input, container);
+                            }, 100);
+                        }
+                    });
+
+                    // 직접 입력 허용
+                    input.addEventListener('input', (e) => {
+                        this.validateTimeInput(input);
+                    });
+
+                    input.addEventListener('blur', (e) => {
+                        this.formatTimeInput(input);
+                    });
+                });
+            }
+
+            validateTimeInput(input) {
+                let value = input.value.replace(/[^\d:]/g, '');
+                
+                // 자동으로 : 추가
+                if (value.length === 2 && !value.includes(':')) {
+                    value += ':';
+                }
+                
+                // 길이 제한
+                if (value.length > 5) {
+                    value = value.substring(0, 5);
+                }
+                
+                input.value = value;
+            }
+
+            formatTimeInput(input) {
+                let value = input.value;
+                
+                if (value.length === 0) return;
+                
+                // 시:분 형식으로 파싱
+                const parts = value.split(':');
+                if (parts.length !== 2) return;
+                
+                let hour = parseInt(parts[0]) || 0;
+                let minute = parseInt(parts[1]) || 0;
+                
+                // 범위 제한
+                hour = Math.max(this.hourLimits.min, Math.min(this.hourLimits.max, hour));
+                minute = Math.max(this.minuteLimits.min, Math.min(this.minuteLimits.max, minute));
+                
+                input.value = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            }
+
+            openPicker(input, container) {
+                this.closePicker(); // 다른 피커 닫기
+                
+                this.currentInput = input;
+                const picker = container.querySelector('.custom-picker');
+                
+                picker.innerHTML = this.createPickerHTML();
+                picker.style.display = 'block';
+                
+                this.setupPickerEvents(picker, input);
+                this.initializePickerValues(picker, input);
+            }
+
+            createPickerHTML() {
+                return `
+                    <div class="picker-header">
+                        <div class="picker-title">시간 선택</div>
+                        <button class="close-btn" onclick="timePicker.closePicker()">×</button>
+                    </div>
+                    
+                    <div class="direct-input">
+                        <input type="number" class="hour-input" min="0" max="23" placeholder="09">
+                        <span class="colon">:</span>
+                        <input type="number" class="minute-input" min="0" max="59" placeholder="00">
+                    </div>
+                    
+                    <div class="time-wheels">
+                        <div class="wheel-container">
+                            <div class="wheel-label">시</div>
+                            <div class="wheel hour-wheel">
+                                <div class="wheel-selector"></div>
+                                <div class="wheel-items hour-items"></div>
+                            </div>
+                        </div>
+                        <div class="wheel-container">
+                            <div class="wheel-label">분</div>
+                            <div class="wheel minute-wheel">
+                                <div class="wheel-selector"></div>
+                                <div class="wheel-items minute-items"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="picker-actions">
+                        <button class="btn btn-secondary" onclick="timePicker.closePicker()">취소</button>
+                        <button class="btn btn-primary" onclick="timePicker.applyTime()">확인</button>
+                    </div>
+                `;
+            }
+
+            setupPickerEvents(picker, input) {
+                // 휠 생성
+                this.createWheelItems(picker);
+                
+                // 직접 입력 이벤트
+                const hourInput = picker.querySelector('.hour-input');
+                const minuteInput = picker.querySelector('.minute-input');
+                
+                hourInput.addEventListener('input', (e) => {
+                    let value = parseInt(e.target.value);
+                    if (!isNaN(value)) {
+                        value = Math.max(0, Math.min(23, value));
+                        this.updateWheelSelection(picker, 'hour', value);
+                    }
+                });
+                
+                minuteInput.addEventListener('input', (e) => {
+                    let value = parseInt(e.target.value);
+                    if (!isNaN(value)) {
+                        value = Math.max(0, Math.min(59, value));
+                        this.updateWheelSelection(picker, 'minute', value);
+                    }
+                });
+
+                // 휠 스크롤 이벤트
+                const hourWheel = picker.querySelector('.hour-wheel');
+                const minuteWheel = picker.querySelector('.minute-wheel');
+                
+                this.setupWheelEvents(hourWheel, 'hour', picker);
+                this.setupWheelEvents(minuteWheel, 'minute', picker);
+            }
+
+            createWheelItems(picker) {
+                const hourItems = picker.querySelector('.hour-items');
+                const minuteItems = picker.querySelector('.minute-items');
+                
+                // 시간 아이템 생성 (제한된 범위)
+                for (let i = this.hourLimits.min; i <= this.hourLimits.max; i++) {
+                    const item = document.createElement('div');
+                    item.className = 'wheel-item';
+                    item.textContent = i.toString().padStart(2, '0');
+                    item.dataset.value = i;
+                    item.addEventListener('click', () => {
+                        this.selectWheelItem('hour', i, picker);
+                    });
+                    hourItems.appendChild(item);
+                }
+                
+                // 분 아이템 생성 (5분 단위로 제한)
+                for (let i = this.minuteLimits.min; i <= this.minuteLimits.max; i += 5) {
+                    const item = document.createElement('div');
+                    item.className = 'wheel-item';
+                    item.textContent = i.toString().padStart(2, '0');
+                    item.dataset.value = i;
+                    item.addEventListener('click', () => {
+                        this.selectWheelItem('minute', i, picker);
+                    });
+                    minuteItems.appendChild(item);
+                }
+            }
+
+            setupWheelEvents(wheel, type, picker) {
+                let isScrolling = false;
+                
+                wheel.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    if (isScrolling) return;
+                    isScrolling = true;
+                    
+                    const items = wheel.querySelectorAll('.wheel-item');
+                    const selected = wheel.querySelector('.wheel-item.selected');
+                    const currentIndex = Array.from(items).indexOf(selected);
+                    
+                    let newIndex;
+                    if (e.deltaY > 0) {
+                        // 아래로 스크롤 - 다음 값
+                        newIndex = Math.min(currentIndex + 1, items.length - 1);
+                    } else {
+                        // 위로 스크롤 - 이전 값
+                        newIndex = Math.max(currentIndex - 1, 0);
+                    }
+                    
+                    if (newIndex !== currentIndex) {
+                        const newValue = parseInt(items[newIndex].dataset.value);
+                        this.selectWheelItem(type, newValue, picker);
+                    }
+                    
+                    setTimeout(() => {
+                        isScrolling = false;
+                    }, 100);
+                });
+            }
+
+            selectWheelItem(type, value, picker) {
+                const wheel = picker.querySelector(`.${type}-wheel`);
+                const items = wheel.querySelectorAll('.wheel-item');
+                const input = picker.querySelector(`.${type}-input`);
+                
+                // 선택 상태 업데이트
+                items.forEach(item => {
+                    item.classList.remove('selected');
+                    if (parseInt(item.dataset.value) === value) {
+                        item.classList.add('selected');
+                    }
+                });
+                
+                // 휠 위치 조정
+                this.scrollToItem(wheel, value, type);
+                
+                // 직접 입력 필드 업데이트
+                input.value = value.toString().padStart(2, '0');
+            }
+
+            scrollToItem(wheel, value, type) {
+                const items = wheel.querySelector('.wheel-items');
+                const item = wheel.querySelector(`[data-value="${value}"]`);
+                
+                if (item) {
+                    const itemIndex = Array.from(wheel.querySelectorAll('.wheel-item')).indexOf(item);
+                    const scrollPosition = -(itemIndex * 40 - 40); // 가운데 정렬
+                    items.style.transform = `translateY(${scrollPosition}px)`;
+                }
+            }
+
+            updateWheelSelection(picker, type, value) {
+                this.selectWheelItem(type, value, picker);
+            }
+
+            initializePickerValues(picker, input) {
+                let hour = 9, minute = 0;
+                
+                if (input.value) {
+                    const parts = input.value.split(':');
+                    hour = parseInt(parts[0]) || 9;
+                    minute = parseInt(parts[1]) || 0;
+                    
+                    // 분은 5의 배수로 조정
+                    minute = Math.round(minute / 5) * 5;
+                }
+                
+                // 초기값 설정
+                picker.querySelector('.hour-input').value = hour.toString().padStart(2, '0');
+                picker.querySelector('.minute-input').value = minute.toString().padStart(2, '0');
+                
+                this.selectWheelItem('hour', hour, picker);
+                this.selectWheelItem('minute', minute, picker);
+            }
+
+            applyTime() {
+                if (!this.currentInput) return;
+                
+                const picker = this.currentInput.parentElement.querySelector('.custom-picker');
+                const hour = picker.querySelector('.hour-input').value.padStart(2, '0');
+                const minute = picker.querySelector('.minute-input').value.padStart(2, '0');
+                
+                this.currentInput.value = `${hour}:${minute}`;
+                this.closePicker();
+            }
+
+            closePicker() {
+                document.querySelectorAll('.custom-picker').forEach(picker => {
+                    picker.style.display = 'none';
+                });
+                this.currentInput = null;
+            }
+
+            setupClickOutside() {
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.custom-picker') && 
+                        !e.target.closest('.time-input')) {
+                        this.closePicker();
+                    }
+                });
+            }
+        }
+
+        // 초기화
+        const timePicker = new TimePicker();
+
+        // 전역 함수로 노출 (HTML에서 사용하기 위해)
+        window.timePicker = timePicker;
+    </script>
+</body>
+</html>

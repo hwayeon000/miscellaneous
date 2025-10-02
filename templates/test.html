@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI 질문하기</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+        
+        button {
+            background-color: #4285f4;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #4285f4;
+        }
+        
+        .question {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .question h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        
+        .answer {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .answer h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #f44336;
+            margin-top: 20px;
+        }
+        
+        .answer-text {
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+         <select onfocus='this.size=10;' 
+            onblur='this.size=1;' 
+            onchange='this.size=1; this.blur();'>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+            <option>11</option>
+            <option>12</option>
+            <option>13</option>
+            <option>14</option>
+            <option>15</option>
+            <option>16</option>
+            <option>17</option>
+            <option>18</option>
+            <option>19</option>
+            <option>20</option>
+            <option>21</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <h1>🤖 Gemini AI와 대화하기</h1>
+        
+        <!-- 일반 텍스트 입력 폼 -->
+        <form method="post" action="/ask" id="questionForm">
+            <div class="form-group">
+                <label for="question">질문을 입력하세요:</label>
+                <textarea id="question" 
+                         name="question" 
+                         placeholder="예: 파이썬에 대해 설명해주세요"
+                         rows="8"
+                         style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box; resize: vertical; min-height: 100px;"
+                         required>{{ question if question else '' }}</textarea>
+            </div>
+            <button type="submit" id="submitBtn">질문하기</button>
+        </form>
+        
+        <!-- 파일 업로드 폼 -->
+        <div style="margin-top: 30px; padding: 20px; background-color: #f0f8ff; border-radius: 5px; border: 2px dashed #4285f4;">
+            <h3 style="margin-top: 0; color: #4285f4;">📁 긴 프롬프트 파일 업로드</h3>
+            <form method="post" action="/ask-file" enctype="multipart/form-data" id="fileForm">
+                <div class="form-group">
+                    <input type="file" name="file" accept=".txt,.md" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 15px;">
+                    <button type="submit" style="background-color: #34a853; width: 100%;">파일로 질문하기</button>
+                </div>
+            </form>
+            <p style="font-size: 14px; color: #666; margin-bottom: 0;">
+                💡 .txt 또는 .md 파일로 긴 프롬프트를 업로드하세요 (3000자 이상 권장)
+            </p>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>🤔 AI가 답변을 생성하고 있습니다...</p>
+        </div>
+        
+        {% if error %}
+        <div class="error">
+            <strong>오류:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if question and answer %}
+        <div class="result-section">
+            {% if usage_info %}
+            <div style="background-color: #e8f5e8; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; color: #2e7d32;">
+                📊 {{ usage_info }}
+            </div>
+            {% endif %}
+            
+            <div class="question">
+                <h3>📝 질문:</h3>
+                <p>{{ question }}</p>
+            </div>
+            
+            <div class="answer">
+                <h3>🤖 Gemini의 답변:</h3>
+                <div class="answer-text">{{ answer }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', function() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = '답변 생성 중...';
+        });
+    </script>
+</body>
+</html>

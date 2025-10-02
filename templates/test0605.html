@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel 다운로드 예제</title>
+    <style>
+        .download-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+
+        /* 모달 오버레이 스타일 */
+        .modal {
+            display: none; /* 초기에는 안보임 */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4); /* 배경 반투명 */
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 모달 내용 스타일 */
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* 닫기 버튼 스타일 */
+        .close-btn {
+            margin-top: 20px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            background-color: #0056b3;
+        }
+
+        
+        form {
+        width: 500px;
+        padding: 1.5rem 1.6rem;
+        box-shadow: 0 0 1rem rgba(0, 0, 0, .05);  
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: #fff;
+        }
+
+        div {
+        margin: .6rem 0;
+        }
+        /* ---- */
+
+        @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        outline: none;
+        word-break: break-all;
+        font-family: Pretendard;
+        }
+
+        input {
+        width: 100%;
+        height: 3rem;
+        border-radius: 5px;
+        padding: 0 1rem;
+        border: 1px solid #e0e5f6;
+        background: #fff;
+        margin: 1rem 0;
+        }
+
+        input::placeholder {
+        font-size: 1rem;
+        }
+
+        p {
+        font-size: 0.95rem;
+        color: #777;
+        }
+
+        p span {
+        font-size: 1rem;
+        color: #000;
+        font-weight: 500;
+        }
+
+        body {
+        background: #f7f8fc;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <form>
+        <h2>초성검색</h2>
+        <p>(검색어 - 사과, 수박, 멜론, 파인애플, 산딸기, 딸기, 망고)</p>
+            <input type="text" oninput="_events(this)" placeholder="텍스트를 입력해주세요.">
+        <div>
+            <p class='docs'>결과: <span></span> </p>
+        </div> 
+    </form>
+
+    <h1>Excel 다운로드 예제</h1>
+    <p>아래 버튼을 클릭하여 사용자 데이터를 Excel 파일로 다운로드하세요.</p>
+    <a href="/download-excel" class="download-btn">Excel 다운로드</a>
+
+    <br>
+    <br>
+    <br>
+    <!-- 모달 띄우는 버튼 -->
+    <button id="openModalBtn">모달 열기</button>
+
+    <!-- 모달 구조 -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <p>여기는 모달창입니다.</p>
+            <button class="close-btn" id="closeModalBtn">닫기</button>
+        </div>
+    </div>
+
+    <script src="../static/js/test.js"></script>
+    
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h1>{{ heading }}</h1>
+    <p>{{ name }}</p>
+    <p>{{ content }}</p>
+</body>
+</html> -->
