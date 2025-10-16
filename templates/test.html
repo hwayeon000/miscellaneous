@@ -118,9 +118,58 @@
             padding: 20px;
             color: #666;
         }
+
+        .notice-body {
+            background-color: white;
+            width: 100%;
+            padding: 20px;
+        }
+        .notice-container {
+            padding: 6px 18px;
+            width: 90%;
+            justify-self: center;
+            margin-bottom: 10px;
+            /* border-radius: 10px; */
+            background: linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 15px, /* 타이틀 글자 중간 */
+                #f0f8ff 15px, /* 여기서부터 배경 시작 */
+                #f0f8ff 100%
+            );
+        }
+        .notice-container:last-child {
+            background: none;
+        }
     </style>
 </head>
 <body>
+    <div class="notice-body">
+        <div class="notice-container notice-title">
+            <div>제목1 <span class="required-mark">*</span></div>
+            <div>
+                <div class="search-group">
+                    <input name="notice_title" type="text" maxlength="100" placeholder="제목을 입력하세요." id="notice_title">
+                </div>
+            </div>
+        </div>
+        <div class="notice-container notice-title">
+            <div>제목2 <span class="required-mark">*</span></div>
+            <div>
+                <div class="search-group">
+                    <input name="notice_title" type="text" maxlength="100" placeholder="제목을 입력하세요." id="notice_title">
+                </div>
+            </div>
+        </div>
+        <div class="notice-container notice-title">
+            <div>제목3 <span class="required-mark">*</span></div>
+            <div>
+                <div class="search-group">
+                    <input name="notice_title" type="text" maxlength="100" placeholder="제목을 입력하세요." id="notice_title">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div>
          <select onfocus='this.size=10;' 
